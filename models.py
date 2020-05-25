@@ -9,11 +9,11 @@ import os
 
 
 def Chatbot(vocab_length: int, max_context: int):
-    inputs = keras.Input(shape=(None,))
+    context_input = keras.Input(shape=(max_context,))
     embedding_layer = Embedding(
         input_dim=vocab_length,
         input_length=max_context,
         output_dim=64
-    )(inputs)
+    )(context_input)
 
-    return keras.Model(inputs=inputs, outputs=embedding_layer)
+    return keras.Model(inputs=context_input, outputs=embedding_layer)

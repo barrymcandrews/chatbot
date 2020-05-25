@@ -28,7 +28,7 @@ def train(args):
         verbose=1
     )
 
-    chatbot_model.save('model')
+    chatbot_model.save(args.model_dir)
 
 
 if __name__ == '__main__':
