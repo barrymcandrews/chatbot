@@ -6,7 +6,7 @@ from typing import List, Set
 from keras.preprocessing.text import Tokenizer
 import tensorflow as tf
 from keras.preprocessing.sequence import pad_sequences
-
+import numpy as np
 
 DATA_DIR = './data/bAbI'
 
@@ -54,12 +54,12 @@ def read_babi_file(filename: str) -> List[Interaction]:
 
 @dataclass
 class DatasetPair():
-    x: tf.data.Dataset
-    y: tf.data.Dataset
+    x: np.ndarray
+    y: np.ndarray
 
     def __init__(self, x, y):
-        self.x = tf.data.Dataset.from_tensor_slices(x)
-        self.y = tf.data.Dataset.from_tensor_slices(y)
+        self.x = np.asarray(x)
+        self.y = np.asarray(y)
 
 @dataclass
 class ChatbotDataset():

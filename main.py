@@ -7,6 +7,7 @@ from data import load_chatbot_dataset
 from models import Chatbot
 import argparse
 import os
+import numpy as np
 
 
 
@@ -19,9 +20,10 @@ def train(args):
         metrics=['sparse_categorical_accuracy']
     )
     chatbot_model.summary()
-    exit(0)
+
     chatbot_model.fit(
-        dataset.training.x, dataset.training.y,
+        [dataset.training.x, dataset.training.y],
+        dataset.training.y,
         batch_size=args.batch_size,
         validation_data=(dataset.testing.x, dataset.testing.y),
         epochs=args.epochs,
