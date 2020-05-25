@@ -4,7 +4,6 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from keras.layers.embeddings import Embedding
 
-from data import load_babi_data
 import argparse
 import os
 
