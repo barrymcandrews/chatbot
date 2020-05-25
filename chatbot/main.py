@@ -53,17 +53,19 @@ def train(epochs, learning_rate, batch_size, gpu_count, model_dir):
     )
 
     chatbot_model.save(model_dir)
+    print('Model saved to ' + model_dir)
 
 
 @cli.command()
 @click.option('--build-dir', type=str, default='build')
-def chat(model_dir):
-    chatbot_model: Model = keras.models.load_model(model_dir)
+def chat(build_dir):
+    chatbot_model: Model = keras.models.load_model(build_dir + '/model')
     text_preprocessor: TextPreprocessor = TextPreprocessor.load()
+    zeros = np.zeros((1, text_preprocessor.max_context_length))
     while True:
         context = input('you: ')
-        prepared = text_preprocessor.prepare(context)
-        chatbot_model.predict([prepared])
+        prepared = text_preprocessor.prepare_texts(context.split(' '))
+        print(chatbot_model.predict([prepared, zeros]))
 
 
 if __name__ == '__main__':

@@ -30,7 +30,7 @@ class TextPreprocessor():
 
     @staticmethod
     def load(folderName='build/'):
-        recovered = TextPreprocessor(set, 0)
+        recovered = TextPreprocessor(set(), 0)
         with open(folderName + 'tokenizer.json') as f:
             recovered.tokenizer = tokenizer_from_json(f.read())
 
