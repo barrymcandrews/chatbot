@@ -39,7 +39,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch-size', type=int, default=128)
 
     parser.add_argument('--gpu-count', type=int, default=os.environ.get('SM_NUM_GPUS') or 0)
-    parser.add_argument('--model-dir', type=str, default=os.environ('SM_MODEL_DIR') or './models')
+    parser.add_argument('--model-dir', type=str, default=os.environ.get('SM_MODEL_DIR') or './models')
     # parser.add_argument('--training', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
     # parser.add_argument('--validation', type=str, default=os.environ['SM_CHANNEL_VALIDATION'])
 
