@@ -21,5 +21,10 @@ setuptools.setup(
         'keras',
         'tensorflow',
         'numpy',
+        'Click'
     ],
+    entry_points='''
+        [console_scripts]
+        bot=chatbot.main:cli
+    '''
 )
