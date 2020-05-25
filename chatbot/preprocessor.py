@@ -28,7 +28,7 @@ class TextPreprocessor():
         return pad_sequences(sequences=[seqs], maxlen=self.max_context_length)
 
     def save(self, folderName='build/'):
-        os.makedirs(folderName)
+        os.makedirs(folderName, exist_ok=True)
         with open(folderName + 'tokenizer.json', 'w', encoding='utf-8') as f:
             f.write(self.tokenizer.to_json())
 
