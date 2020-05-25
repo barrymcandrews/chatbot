@@ -64,8 +64,11 @@ def chat(build_dir):
     zeros = np.zeros((1, text_preprocessor.max_context_length))
     while True:
         context = input('you: ')
-        prepared = text_preprocessor.prepare_texts(context.split(' '))
-        print(chatbot_model.predict([prepared, zeros]))
+        prepared = text_preprocessor.prepare(context)
+        print(prepared.shape)
+        print(prepared)
+        result = chatbot_model.predict([prepared, zeros])
+        print(result.shape)
 
 
 if __name__ == '__main__':

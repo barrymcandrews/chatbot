@@ -84,7 +84,6 @@ def load_chatbot_dataset() -> ChatbotDataset:
         max([len(x.context) for x in training_conversations]),
         max([len(x.context) for x in testing_conversations])
     )
-    print("max context length: " + str(max_context_length))
 
     vocab = (set()
         .union({x for y in training_conversations for x in y.context })

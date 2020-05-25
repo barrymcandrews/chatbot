@@ -6,17 +6,26 @@ import json
 from keras_preprocessing.text import tokenizer_from_json
 import os
 
+def flat_map(list):
+    return [x for y in list for x in y]
+
+
 class TextPreprocessor():
     def __init__(self, vocab: Set[str], max_context_length: int):
         self.tokenizer = Tokenizer(filters=[])
         self.tokenizer.fit_on_texts(vocab)
         self.max_context_length = max_context_length
+        print("Max context lenght: " + str(max_context_length))
+        print("Vocabulary size: " + str(len(vocab)))
 
     def prepare_texts(self, texts):
         return pad_sequences(self.tokenizer.texts_to_sequences(texts), maxlen=self.max_context_length)
 
     def prepare(self, string: str):
-            return self.prepare_texts([string])[0]
+        print(string)
+        seqs = flat_map(self.tokenizer.texts_to_sequences(string.split(' ')))
+        print(seqs)
+        return pad_sequences(sequences=[seqs], maxlen=self.max_context_length)
 
     def save(self, folderName='build/'):
         os.makedirs(folderName)
