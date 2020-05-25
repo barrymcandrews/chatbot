@@ -7,6 +7,7 @@ from keras.preprocessing.text import Tokenizer
 import tensorflow as tf
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
+from chatbot.preprocessor import TextPreprocessor
 
 DATA_DIR = './data/bAbI'
 
@@ -91,20 +92,17 @@ def load_chatbot_dataset() -> ChatbotDataset:
         .union({x for y in testing_conversations for x in y.context })
         .union({x for y in testing_conversations for x in y.response }))
 
-    tokenizer = Tokenizer(filters = [])
-    tokenizer.fit_on_texts(vocab)
-
-    def tokenize(texts):
-        return pad_sequences(tokenizer.texts_to_sequences(texts), maxlen=max_context_length)
+    preprocessor = TextPreprocessor(vocab, max_context_length)
+    preprocessor.save()
 
     training_dataset_pair = DatasetPair(
-        x=tokenize([d.context for d in training_conversations]),
-        y=tokenize([d.response for d in training_conversations])
+        x=preprocessor.prepare_texts([d.context for d in training_conversations]),
+        y=preprocessor.prepare_texts([d.response for d in training_conversations])
     )
 
     testing_dataset_pair = DatasetPair(
-        x=tokenize([d.context for d in testing_conversations]),
-        y=tokenize([d.response for d in testing_conversations])
+        x=preprocessor.prepare_texts([d.context for d in testing_conversations]),
+        y=preprocessor.prepare_texts([d.response for d in testing_conversations])
     )
 
 
@@ -114,6 +112,3 @@ def load_chatbot_dataset() -> ChatbotDataset:
         vocabulary_length=len(vocab) + 1,
         max_context_length=max_context_length,
     )
-
-
-

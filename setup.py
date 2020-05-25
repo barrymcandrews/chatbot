@@ -20,6 +20,7 @@ setuptools.setup(
     install_requires=[
         'keras',
         'tensorflow',
+        'tensorflow-gpu',
         'numpy',
         'Click'
     ],
