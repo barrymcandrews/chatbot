@@ -2,7 +2,6 @@ import tensorflow as tf
 
 from tensorflow import keras
 from tensorflow.keras import layers
-from keras.layers.embeddings import Embedding
 
 from data import load_chatbot_dataset
 from models import Chatbot
@@ -19,7 +18,8 @@ def train(args):
         loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['sparse_categorical_accuracy']
     )
-
+    chatbot_model.summary()
+    exit(0)
     chatbot_model.fit(
         dataset.training.x, dataset.training.y,
         batch_size=args.batch_size,
