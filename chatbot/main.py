@@ -61,7 +61,6 @@ def train(epochs, learning_rate, batch_size, gpu_count, model_dir):
 def chat(build_dir):
     chatbot_model: Model = keras.models.load_model(build_dir + '/model')
     text_preprocessor: TextPreprocessor = TextPreprocessor.load()
-    zeros = np.zeros((1, text_preprocessor.max_context_length))
     start = text_preprocessor.prepare('<STX>')
     while True:
         context = input('you: ')

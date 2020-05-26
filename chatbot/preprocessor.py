@@ -5,6 +5,7 @@ from typing import Set
 import json
 from keras_preprocessing.text import tokenizer_from_json
 import os
+import copy
 
 STX = '<STX>'
 ETX = '<ETX>'
@@ -23,6 +24,7 @@ class TextPreprocessor():
         print("Vocabulary size: " + str(len(vocab)))
 
     def prepare_texts(self, texts, is_response=False, add_start=False, add_end=False):
+        texts = copy.deepcopy(texts)
         if add_start:
             for words in texts:
                 words.insert(0, STX)
