@@ -35,7 +35,7 @@ class TextPreprocessor():
 
     def prepare(self, string: str):
         seqs = flat_map(self.tokenizer.texts_to_sequences(string.split(' ')))
-        return pad_sequences(sequences=[seqs], maxlen=self.max_context_length)
+        return pad_sequences(sequences=[seqs], maxlen=self.max_context_length, padding='post', truncating='post')
 
     def save(self, folderName='build/'):
         os.makedirs(folderName, exist_ok=True)

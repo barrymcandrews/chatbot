@@ -59,6 +59,11 @@ class ChatbotDataset():
     y: np.ndarray
     z: np.ndarray
 
+    def __init__(self, x, y, z):
+        self.x = np.asarray(x)
+        self.y = np.asarray(y)
+        self.z = np.asarray(z)
+
 @dataclass
 class ChatbotData():
     training: ChatbotDataset

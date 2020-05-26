@@ -66,15 +66,19 @@ def chat(build_dir):
     while True:
         context = input('you: ')
         prepared = text_preprocessor.prepare(context)
-        result = chatbot_model.predict([prepared, start])
-        yel = result[0,:]
-        print(yel)
-        print(yel.shape)
-        p = np.max(yel)
-        print(p)
-        mp = np.argmax(yel)
-        print(mp)
-        print(text_preprocessor.tokenizer.sequences_to_texts([[mp]]))
+        print('input: ' + str(prepared))
+        print('start: ' + str(start))
+
+        result = chatbot_model.predict(prepared, start)
+        # yel = result[0,:]
+        print(result[0])
+
+        print([np.argmax(x) for x in result[0]])
+        # p = np.max(yel)
+        # print(p)
+        # mp = np.argmax(yel)
+        # print(mp)
+        # print(text_preprocessor.tokenizer.sequences_to_texts([[mp]]))
 
         # print(result.shape)
         # print(result)
