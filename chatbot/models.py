@@ -10,7 +10,7 @@ import os
 
 def Chatbot(vocab_length: int, max_context: int):
     SharedEmbedding = Embedding(
-        input_dim=vocab_length,
+        input_dim=vocab_length+ 1,
         input_length=max_context,
         output_dim=200
     )

@@ -62,10 +62,11 @@ def chat(build_dir):
     chatbot_model: Model = keras.models.load_model(build_dir + '/model')
     text_preprocessor: TextPreprocessor = TextPreprocessor.load()
     zeros = np.zeros((1, text_preprocessor.max_context_length))
+    start = text_preprocessor.prepare('<STX>')
     while True:
         context = input('you: ')
         prepared = text_preprocessor.prepare(context)
-        result = chatbot_model.predict([prepared, zeros])
+        result = chatbot_model.predict([prepared, start])
         print(result.shape)
         print(result)
 

@@ -108,6 +108,6 @@ def load_chatbot_dataset() -> ChatbotDataset:
     return ChatbotDataset(
         training_dataset_pair,
         testing_dataset_pair,
-        vocabulary_length=len(vocab) + 1,
+        vocabulary_length=len(vocab) + 3, # needs to be one more than the max size plus STX and ETX
         max_context_length=max_context_length,
     )
