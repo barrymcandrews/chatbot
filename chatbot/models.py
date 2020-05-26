@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from tensorflow import keras
-from tensorflow.keras import layers
+from tensorflow.keras import layers, Model
 from tensorflow.keras.layers import Embedding, LSTM, Dense, TimeDistributed
 
 import argparse
@@ -25,4 +25,4 @@ def Chatbot(vocab_length: int, max_context: int):
     decoder_dense = Dense(vocab_length, tf.keras.activations.softmax)(decoder_lstm)
     # decoder_dense = TimeDistributed(Dense(vocab_length, tf.keras.activations.softmax))(decoder_lstm)
 
-    return keras.Model(inputs=[encoder_input, decoder_input], outputs=decoder_dense)
+    return Model(inputs=[encoder_input, decoder_input], outputs=decoder_dense)

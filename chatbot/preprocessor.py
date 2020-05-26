@@ -28,7 +28,8 @@ class TextPreprocessor():
                 words.append(ETX)
                 words.insert(0, STX)
         seqs = self.tokenizer.texts_to_sequences(texts)
-        return pad_sequences(sequences=seqs, maxlen=self.max_context_length)
+        padding = 'post' if add_tokens else 'pre'
+        return pad_sequences(sequences=seqs, maxlen=self.max_context_length, padding=padding, truncating=padding)
 
     def prepare(self, string: str):
         seqs = flat_map(self.tokenizer.texts_to_sequences(string.split(' ')))
