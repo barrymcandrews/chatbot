@@ -23,7 +23,8 @@ class TextPreprocessor():
         print("Max context lenght: " + str(max_context_length))
         print("Vocabulary size: " + str(len(vocab)))
 
-    def prepare_texts(self, texts, is_response=False, add_start=False, add_end=False):
+    def prepare_texts(self, texts, is_response=False, add_start=False, add_end=False, max_len=None):
+        max_len = self.max_context_length if max_len is None else max_len
         texts = copy.deepcopy(texts)
         if add_start:
             for words in texts:
@@ -33,11 +34,12 @@ class TextPreprocessor():
                 words.append(ETX)
         seqs = self.tokenizer.texts_to_sequences(texts)
         padding = 'post' if is_response else 'pre'
-        return pad_sequences(sequences=seqs, maxlen=self.max_context_length, padding=padding, truncating=padding)
+        return pad_sequences(sequences=seqs, maxlen=max_len, padding=padding, truncating=padding)
 
-    def prepare(self, string: str):
+    def prepare(self, string: str, is_response=False):
         seqs = flat_map(self.tokenizer.texts_to_sequences(string.split(' ')))
-        return pad_sequences(sequences=[seqs], maxlen=self.max_context_length, padding='post', truncating='post')
+        padding = 'post' if is_response else 'pre'
+        return pad_sequences(sequences=[seqs], maxlen=self.max_context_length, padding=padding, truncating=padding)
 
     def save(self, folderName='build/'):
         os.makedirs(folderName, exist_ok=True)

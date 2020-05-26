@@ -98,14 +98,14 @@ def load_chatbot_dataset() -> ChatbotData:
 
     training_dataset = ChatbotDataset(
         x=preprocessor.prepare_texts([d.context for d in training_conversations]),
-        y=preprocessor.prepare_texts([d.response for d in training_conversations], is_response=True, add_start=True),
-        z=preprocessor.prepare_texts([d.response for d in training_conversations], is_response=True, add_end=True)
+        y=preprocessor.prepare_texts([d.response for d in training_conversations], is_response=True, add_start=True, max_len=5),
+        z=preprocessor.prepare_texts([d.response for d in training_conversations], is_response=True, add_end=True, max_len=5)
     )
 
     testing_dataset = ChatbotDataset(
         x=preprocessor.prepare_texts([d.context for d in testing_conversations]),
-        y=preprocessor.prepare_texts([d.response for d in testing_conversations], is_response=True, add_start=True),
-        z=preprocessor.prepare_texts([d.response for d in testing_conversations], is_response=True, add_end=True)
+        y=preprocessor.prepare_texts([d.response for d in testing_conversations], is_response=True, add_start=True, max_len=5),
+        z=preprocessor.prepare_texts([d.response for d in testing_conversations], is_response=True, add_end=True, max_len=5)
     )
 
 

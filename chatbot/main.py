@@ -61,23 +61,32 @@ def train(epochs, learning_rate, batch_size, gpu_count, model_dir):
 def chat(build_dir):
     chatbot_model: Model = keras.models.load_model(build_dir + '/model')
     text_preprocessor: TextPreprocessor = TextPreprocessor.load()
-    start = text_preprocessor.prepare('<STX>')
+    start = text_preprocessor.prepare('<STX>',  is_response=True)
     while True:
         context = input('you: ')
         prepared = text_preprocessor.prepare(context)
         print('input: ' + str(prepared))
         print('start: ' + str(start))
 
-        result = chatbot_model.predict(prepared, start)
-        # yel = result[0,:]
-        print(result[0])
+        response = "<STX>"
+        finished = False
+        while not finished:
+            processed_response = text_preprocessor.prepare(response)
+            result = chatbot_model.predict([prepared, processed_response])
 
-        print([np.argmax(x) for x in result[0]])
-        # p = np.max(yel)
-        # print(p)
-        # mp = np.argmax(yel)
-        # print(mp)
-        # print(text_preprocessor.tokenizer.sequences_to_texts([[mp]]))
+            yel = result[0,:]
+            # print(result[0])
+            # print([np.argmax(x) for x in result[0]])
+            # p = np.max(yel)
+            # print(p)
+            mp = np.argmax(yel)
+            if mp == 28:
+                finished = True
+
+            response = response + ' ' + text_preprocessor.tokenizer.sequences_to_texts([[mp]])[0]
+            print(response)
+            finished = True
+        print(text_preprocessor.tokenizer.sequences_to_texts([[response]]))
 
         # print(result.shape)
         # print(result)
