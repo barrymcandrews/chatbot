@@ -22,6 +22,7 @@ def Chatbot(vocab_length: int, max_context: int):
     decoder_input = keras.Input(shape=(max_context,), dtype='int32')
     decoder_embedding = SharedEmbedding(decoder_input)
     decoder_lstm, _, _ = LSTM(200, return_state=True, return_sequences=True)(decoder_embedding, initial_state=[state_h, state_c])
-    decoder_dense = TimeDistributed(Dense(vocab_length, tf.keras.activations.softmax))(decoder_lstm)
+    decoder_dense = Dense(vocab_length, tf.keras.activations.softmax)(decoder_lstm)
+    # decoder_dense = TimeDistributed(Dense(vocab_length, tf.keras.activations.softmax))(decoder_lstm)
 
     return keras.Model(inputs=[encoder_input, decoder_input], outputs=decoder_dense)

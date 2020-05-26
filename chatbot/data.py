@@ -45,7 +45,7 @@ def read_babi_file(filename: str) -> List[Interaction]:
             else:
                 interaction = Interaction(
                     context=flatten(statements),
-                    response=segment[1]
+                    response=segment[1].split(' ')
                 )
                 interaction.context.extend(words)
                 interactions.append(interaction)
@@ -96,12 +96,12 @@ def load_chatbot_dataset() -> ChatbotDataset:
 
     training_dataset_pair = DatasetPair(
         x=preprocessor.prepare_texts([d.context for d in training_conversations]),
-        y=preprocessor.prepare_texts([d.response for d in training_conversations])
+        y=preprocessor.prepare_texts([d.response for d in training_conversations], add_tokens=True)
     )
 
     testing_dataset_pair = DatasetPair(
         x=preprocessor.prepare_texts([d.context for d in testing_conversations]),
-        y=preprocessor.prepare_texts([d.response for d in testing_conversations])
+        y=preprocessor.prepare_texts([d.response for d in testing_conversations], add_tokens=True)
     )
 
 

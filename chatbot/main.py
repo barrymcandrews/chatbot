@@ -65,10 +65,9 @@ def chat(build_dir):
     while True:
         context = input('you: ')
         prepared = text_preprocessor.prepare(context)
-        print(prepared.shape)
-        print(prepared)
         result = chatbot_model.predict([prepared, zeros])
         print(result.shape)
+        print(result)
 
 
 if __name__ == '__main__':
