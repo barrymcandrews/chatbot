@@ -22,13 +22,15 @@ class TextPreprocessor():
         print("Max context lenght: " + str(max_context_length))
         print("Vocabulary size: " + str(len(vocab)))
 
-    def prepare_texts(self, texts, add_tokens=False):
-        if add_tokens:
+    def prepare_texts(self, texts, is_response=False, add_start=False, add_end=False):
+        if add_start:
+            for words in texts:
+                words.insert(0, STX)
+        if add_end:
             for words in texts:
                 words.append(ETX)
-                words.insert(0, STX)
         seqs = self.tokenizer.texts_to_sequences(texts)
-        padding = 'post' if add_tokens else 'pre'
+        padding = 'post' if is_response else 'pre'
         return pad_sequences(sequences=seqs, maxlen=self.max_context_length, padding=padding, truncating=padding)
 
     def prepare(self, string: str):

@@ -45,9 +45,9 @@ def train(epochs, learning_rate, batch_size, gpu_count, model_dir):
 
     chatbot_model.fit(
         [dataset.training.x, dataset.training.y],
-        dataset.training.y,
+        dataset.training.z,
         batch_size=batch_size,
-        validation_data=([dataset.testing.x, dataset.testing.y], dataset.testing.y),
+        validation_data=([dataset.testing.x, dataset.testing.y], dataset.testing.z),
         epochs=epochs,
         verbose=1
     )

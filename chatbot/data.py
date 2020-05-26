@@ -54,23 +54,20 @@ def read_babi_file(filename: str) -> List[Interaction]:
 
 
 @dataclass
-class DatasetPair():
+class ChatbotDataset():
     x: np.ndarray
     y: np.ndarray
-
-    def __init__(self, x, y):
-        self.x = np.asarray(x)
-        self.y = np.asarray(y)
+    z: np.ndarray
 
 @dataclass
-class ChatbotDataset():
-    training: DatasetPair
-    testing: DatasetPair
+class ChatbotData():
+    training: ChatbotDataset
+    testing: ChatbotDataset
     vocabulary_length: int
     max_context_length: int
 
 
-def load_chatbot_dataset() -> ChatbotDataset:
+def load_chatbot_dataset() -> ChatbotData:
     dataset_names = {re.sub(r'(_test.txt)|(_train.txt)$', '', x) for x in os.listdir(DATA_DIR)}
 
     training_conversations: List[Interaction] = []
@@ -94,20 +91,22 @@ def load_chatbot_dataset() -> ChatbotDataset:
     preprocessor = TextPreprocessor(vocab, max_context_length)
     preprocessor.save()
 
-    training_dataset_pair = DatasetPair(
+    training_dataset = ChatbotDataset(
         x=preprocessor.prepare_texts([d.context for d in training_conversations]),
-        y=preprocessor.prepare_texts([d.response for d in training_conversations], add_tokens=True)
+        y=preprocessor.prepare_texts([d.response for d in training_conversations], is_response=True, add_start=True),
+        z=preprocessor.prepare_texts([d.response for d in training_conversations], is_response=True, add_end=True)
     )
 
-    testing_dataset_pair = DatasetPair(
+    testing_dataset = ChatbotDataset(
         x=preprocessor.prepare_texts([d.context for d in testing_conversations]),
-        y=preprocessor.prepare_texts([d.response for d in testing_conversations], add_tokens=True)
+        y=preprocessor.prepare_texts([d.response for d in testing_conversations], is_response=True, add_start=True),
+        z=preprocessor.prepare_texts([d.response for d in testing_conversations], is_response=True, add_end=True)
     )
 
 
-    return ChatbotDataset(
-        training_dataset_pair,
-        testing_dataset_pair,
+    return ChatbotData(
+        training_dataset,
+        testing_dataset,
         vocabulary_length=len(vocab) + 3, # needs to be one more than the max size plus STX and ETX
         max_context_length=max_context_length,
     )
