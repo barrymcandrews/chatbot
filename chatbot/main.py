@@ -3,9 +3,10 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers, Model
 
-from chatbot.data import load_chatbot_dataset
+from chatbot.data import load_movie_dataset, ChatbotData
 from chatbot.models import Chatbot
 from chatbot.preprocessor import TextPreprocessor
+from sklearn.model_selection import KFold
 import argparse
 import os
 import numpy as np
@@ -33,24 +34,37 @@ def summary():
 @click.option('--batch-size', type=int, default=128)
 @click.option('--gpu-count', type=int, default=0)
 @click.option('--model-dir', type=str, default='build/model')
-def train(epochs, learning_rate, batch_size, gpu_count, model_dir):
-    dataset = load_chatbot_dataset()
-    chatbot_model = Chatbot(dataset.vocabulary_length, dataset.max_context_length)
+@click.option('--k-folds', type=int, default=10)
+def train(epochs, learning_rate, batch_size, gpu_count, model_dir, k_folds):
+    (dataset, preprocessor) = load_movie_dataset()
+    print("Vocabulary Size: " + str(preprocessor.get_vocabulary_size()))
+    print("Max Context Length: " + str(preprocessor.max_context_length))
+    chatbot_model = Chatbot(
+        preprocessor.get_vocabulary_size(),
+        preprocessor.max_context_length
+    )
     chatbot_model.compile(
         optimizer=keras.optimizers.Adam(),
         loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['sparse_categorical_accuracy']
     )
     chatbot_model.summary()
+    exit(0)
 
-    chatbot_model.fit(
-        [dataset.training.x, dataset.training.y],
-        dataset.training.z,
-        batch_size=batch_size,
-        validation_data=([dataset.testing.x, dataset.testing.y], dataset.testing.z),
-        epochs=epochs,
-        verbose=1
-    )
+    kfold = KFold(n_splits=k_folds)
+
+    for train_index, test_index in kfold.split(dataset.x):
+        chatbot_model.fit(
+            [dataset.x[train_index], dataset.y[train_index]],
+            dataset.z[train_index],
+            batch_size=batch_size,
+            validation_data=(
+                [dataset.x[test_index], dataset.y[test_index]],
+                dataset.z[test_index]
+            ),
+            epochs=epochs,
+            verbose=1
+        )
 
     chatbot_model.save(model_dir)
     print('Model saved to ' + model_dir)
@@ -68,28 +82,24 @@ def chat(build_dir):
         print('input: ' + str(prepared))
         print('start: ' + str(start))
 
-        response = "<STX>"
+        response = "<stx>"
         finished = False
+        i = 0
         while not finished:
-            processed_response = text_preprocessor.prepare(response)
+            processed_response = text_preprocessor.prepare(response, max_len=5)
             result = chatbot_model.predict([prepared, processed_response])
 
-            yel = result[0,:]
-            # print(result[0])
-            # print([np.argmax(x) for x in result[0]])
-            # p = np.max(yel)
-            # print(p)
-            mp = np.argmax(yel)
-            if mp == 28:
+            predicted_response = [np.argmax(x) for x in result[0]]
+
+            next_word = predicted_response[i]
+            print(text_preprocessor.tokenizer.sequences_to_texts([[next_word]]))
+            if next_word == 0 or i == 4:
                 finished = True
 
-            response = response + ' ' + text_preprocessor.tokenizer.sequences_to_texts([[mp]])[0]
+            response = response + ' ' + text_preprocessor.tokenizer.sequences_to_texts([[next_word]])[0]
             print(response)
-            finished = True
-        print(text_preprocessor.tokenizer.sequences_to_texts([[response]]))
+            i = i + 1
 
-        # print(result.shape)
-        # print(result)
 
 
 if __name__ == '__main__':

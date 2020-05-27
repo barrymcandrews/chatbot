@@ -22,7 +22,8 @@ setuptools.setup(
         'tensorflow',
         'tensorflow-gpu',
         'numpy',
-        'Click'
+        'Click',
+        'convokit'
     ],
     entry_points='''
         [console_scripts]

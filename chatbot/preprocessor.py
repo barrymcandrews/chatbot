@@ -4,42 +4,45 @@ from keras.preprocessing.sequence import pad_sequences
 from typing import Set
 import json
 from keras_preprocessing.text import tokenizer_from_json
+from os.path import exists
 import os
 import copy
+import re
 
-STX = '<STX>'
-ETX = '<ETX>'
+STX = '<stx>'
+ETX = '<etx>'
 
-def flat_map(list):
+def _flat_map(list):
     return [x for y in list for x in y]
 
 
-class TextPreprocessor():
-    def __init__(self, vocab: Set[str], max_context_length: int):
-        vocab = vocab.union(set([STX, ETX]))
-        self.tokenizer = Tokenizer(filters=[])
-        self.tokenizer.fit_on_texts(vocab)
-        self.max_context_length = max_context_length
-        print("Max context lenght: " + str(max_context_length))
-        print("Vocabulary size: " + str(len(vocab)))
+def _split(string):
+        string = re.sub(r'(\.)', ' . ', string)
+        string = re.sub(r'(\?)', ' ? ', string)
+        string =  re.sub(r'(\!)', ' ! ' , string)
+        string =  re.sub(r'[\-]{2,}', ' -- ' , string)
+        string =  re.sub(r'[ \t]{2,}', ' ', string)
+        return string.strip().split(' ')
 
-    def prepare_texts(self, texts, is_response=False, add_start=False, add_end=False, max_len=None):
+class TextPreprocessor():
+    def __init__(self, tokenizer, max_context_length):
+        self.tokenizer = tokenizer
+        self.max_context_length = max_context_length
+
+    def get_vocabulary_size(self):
+        return len(self.tokenizer.word_index) + 1
+
+    def prepare(self, string: str, response=False, add_start=False, add_end=False, max_len=None):
         max_len = self.max_context_length if max_len is None else max_len
-        texts = copy.deepcopy(texts)
+        seqs = _flat_map(self.tokenizer.texts_to_sequences(_split(string)))
         if add_start:
-            for words in texts:
+            for words in seqs:
                 words.insert(0, STX)
         if add_end:
-            for words in texts:
+            for words in seqs:
                 words.append(ETX)
-        seqs = self.tokenizer.texts_to_sequences(texts)
-        padding = 'post' if is_response else 'pre'
-        return pad_sequences(sequences=seqs, maxlen=max_len, padding=padding, truncating=padding)
-
-    def prepare(self, string: str, is_response=False):
-        seqs = flat_map(self.tokenizer.texts_to_sequences(string.split(' ')))
-        padding = 'post' if is_response else 'pre'
-        return pad_sequences(sequences=[seqs], maxlen=self.max_context_length, padding=padding, truncating=padding)
+        padding = 'post' if response else 'pre'
+        return pad_sequences(sequences=[seqs], maxlen=max_len, padding=padding, truncating=padding)
 
     def save(self, folderName='build/'):
         os.makedirs(folderName, exist_ok=True)
@@ -53,16 +56,32 @@ class TextPreprocessor():
 
     @staticmethod
     def load(folderName='build/'):
-        recovered = TextPreprocessor(set(), 0)
+        tokenizer = None
+        max_context_length = None
         with open(folderName + 'tokenizer.json') as f:
-            recovered.tokenizer = tokenizer_from_json(f.read())
+            tokenizer = tokenizer_from_json(f.read())
 
         with open(folderName + 'build.json') as f:
-            recovered.max_context_length = json.load(f)['maxContextLength']
+            max_context_length = json.load(f)['maxContextLength']
 
-        return recovered
+        return TextPreprocessor(tokenizer, max_context_length)
+
+    @staticmethod
+    def build_exists(folderName='build/'):
+        return exists(folderName + 'build.json') and exists(folderName + 'tokenizer.json')
 
 
+class PreprocessorBuilder():
+    def __init__(self):
+        self.vocab = set([STX, ETX])
+        self.max_context_length = 0
 
+    def fit(self, string):
+        words = _split(string)
+        self.vocab = self.vocab.union(words)
+        self.max_context_length = max(self.max_context_length, len(words))
 
-
+    def build(self) -> TextPreprocessor:
+        tokenizer = Tokenizer(filters=[])
+        tokenizer.fit_on_texts(self.vocab)
+        return TextPreprocessor(tokenizer, self.max_context_length)
