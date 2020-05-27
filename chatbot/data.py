@@ -14,14 +14,14 @@ from itertools import tee
 
 @dataclass
 class ChatbotDataset():
-    x: np.ndarray = np.empty
-    y: np.ndarray = np.empty
-    z: np.ndarray = np.empty
+    x: np.ndarray = np.array([], dtype=np.int32)
+    y: np.ndarray = np.array([], dtype=np.int32)
+    z: np.ndarray = np.array([], dtype=np.int32)
 
     def append(self, x, y, z):
-        self.x.append(x)
-        self.y.append(y)
-        self.z.append(z)
+        self.x = np.append(self.x, [x])
+        self.y = np.append(self.y, [y])
+        self.z = np.append(self.z, [z])
 
 
 ChatbotData = Tuple[ChatbotDataset, TextPreprocessor]
@@ -52,9 +52,8 @@ def load_movie_dataset() -> ChatbotData:
         print("Preprocessor build saved.")
 
     for conversation in corpus.iter_conversations():
-        all_utterances = [u for u in conversation.iter_utterances()].reverse()
-        if  all_utterances is None:
-            continue
+        all_utterances = [u for u in conversation.iter_utterances()]
+        all_utterances.reverse()
         for (u1, u2) in _pairwise(all_utterances):
             dataset.append(
                 x=preprocessor.prepare(u1.text),

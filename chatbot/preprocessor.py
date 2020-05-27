@@ -33,14 +33,13 @@ class TextPreprocessor():
         return len(self.tokenizer.word_index) + 1
 
     def prepare(self, string: str, response=False, add_start=False, add_end=False, max_len=None):
-        max_len = self.max_context_length if max_len is None else max_len
-        seqs = _flat_map(self.tokenizer.texts_to_sequences(_split(string)))
         if add_start:
-            for words in seqs:
-                words.insert(0, STX)
+            string = STX + string
         if add_end:
-            for words in seqs:
-                words.append(ETX)
+            string = string + ETX
+        seqs = _flat_map(self.tokenizer.texts_to_sequences(_split(string)))
+        
+        max_len = self.max_context_length if max_len is None else max_len
         padding = 'post' if response else 'pre'
         return pad_sequences(sequences=[seqs], maxlen=max_len, padding=padding, truncating=padding)
 
