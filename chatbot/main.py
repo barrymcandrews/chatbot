@@ -51,12 +51,7 @@ def train(epochs, learning_rate, batch_size, gpu_count, model_dir, k_folds):
     chatbot_model.summary()
 
     kfold = KFold(n_splits=k_folds)
-    
-    print("Datasets: ")
-    print(dataset.x)
-    print(dataset.y)
-    print(dataset.z)
-    
+
     for train_index, test_index in kfold.split(dataset.x):
         chatbot_model.fit(
             [dataset.x[train_index], dataset.y[train_index]],

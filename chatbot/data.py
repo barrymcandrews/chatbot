@@ -9,7 +9,10 @@ from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 from chatbot.preprocessor import TextPreprocessor, PreprocessorBuilder
 from convokit import Corpus, download
+from convokit.text_processing.textProcessor import TextProcessor
+from convokit.text_processing.textParser import TextParser
 from itertools import tee
+import json
 
 
 @dataclass
@@ -23,6 +26,22 @@ class ChatbotDataset():
         self.y = np.append(self.y, [y])
         self.z = np.append(self.z, [z])
 
+    def to_json(self):
+        return json.dumps({
+            "x": self.x.tolist(),
+            "y": self.y.tolist(),
+            "z": self.z.tolist(),
+        })
+
+    @staticmethod
+    def from_json(json_string):
+        j = json.loads(json_string)
+        return ChatbotDataset(
+            x=np.array(j["x"], dtype=np.int32),
+            y=np.array(j["y"], dtype=np.int32),
+            z=np.array(j["z"], dtype=np.int32),
+        )
+
 
 ChatbotData = Tuple[ChatbotDataset, TextPreprocessor]
 
@@ -34,10 +53,19 @@ def _pairwise(iterable):
     return zip(a, b)
 
 
+def _reformat(string):
+        string = re.sub(r'(\.)', ' . ', string)
+        string = re.sub(r'(\?)', ' ? ', string)
+        string =  re.sub(r'(\!)', ' ! ' , string)
+        string =  re.sub(r'[\-]{2,}', ' -- ' , string)
+        string =  re.sub(r'[ \t]{2,}', ' ', string)
+        return string.strip()
+
+
 def load_movie_dataset() -> ChatbotData:
     corpus = Corpus(filename=download("movie-corpus"))
-    dataset = ChatbotDataset()
 
+    # Preprocessor
     preprocessor = None
     if TextPreprocessor.build_exists():
         print("Build found. Using vocabulary from previous build.")
@@ -51,14 +79,31 @@ def load_movie_dataset() -> ChatbotData:
         preprocessor.save()
         print("Preprocessor build saved.")
 
-    for conversation in corpus.iter_conversations():
-        all_utterances = [u for u in conversation.iter_utterances()]
-        all_utterances.reverse()
-        for (u1, u2) in _pairwise(all_utterances):
-            dataset.append(
-                x=preprocessor.prepare(u1.text),
-                y=preprocessor.prepare(u2.text, response=True, add_start=True),
-                z=preprocessor.prepare(u2.text, response=True, add_end=True)
-            )
+    # Dataset
+    dataset = ChatbotDataset()
+    if os.path.exists('build/dataset.json'):
+        print("Tokenized dataset found. Using dataset from previous build.")
+        with open('build/dataset.json') as f:
+            dataset = ChatbotDataset.from_json(f.read())
+    else:
+        print("Tokenizing data.", end="")
+        i = 0
+        for conversation in corpus.iter_conversations():
+            i = i + 1
+            all_utterances = [u for u in conversation.iter_utterances()]
+            all_utterances.reverse()
+            for (u1, u2) in _pairwise(all_utterances):
+                dataset.append(
+                    x=preprocessor.prepare(u1.text),
+                    y=preprocessor.prepare(u2.text, response=True, add_start=True),
+                    z=preprocessor.prepare(u2.text, response=True, add_end=True)
+                )
+            if i % 500 == 0:
+                print(".", end="")
+        print("")
+        with open('build/dataset.json', 'w', encoding='utf-8') as f:
+            f.write(dataset.to_json())
+        print("Dataset saved to build/dataset.json")
+
 
     return (dataset, preprocessor)
