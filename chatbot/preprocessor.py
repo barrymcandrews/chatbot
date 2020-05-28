@@ -11,18 +11,22 @@ import re
 
 STX = '<stx>'
 ETX = '<etx>'
+UNKNOWN = '<?>'
 
 def _flat_map(list):
     return [x for y in list for x in y]
 
 
 def _split(string):
+        string = re.sub(r'<[^>]*>|\*|\[|\]|"', ' ', string)
+        string = re.sub(r'(,)', ' , ', string)
+        string = re.sub(r'(;)', ' ; ', string)
         string = re.sub(r'(\.)', ' . ', string)
         string = re.sub(r'(\?)', ' ? ', string)
         string =  re.sub(r'(\!)', ' ! ' , string)
         string =  re.sub(r'[\-]{2,}', ' -- ' , string)
         string =  re.sub(r'[ \t]{2,}', ' ', string)
-        return string.strip().split(' ')
+        return string.strip().lower().split(' ')
 
 class TextPreprocessor():
     def __init__(self, tokenizer, max_context_length):
@@ -37,11 +41,12 @@ class TextPreprocessor():
             string = STX + string
         if add_end:
             string = string + ETX
-        seqs = _flat_map(self.tokenizer.texts_to_sequences(_split(string)))
-        
+        tokenized = [self.tokenizer.word_index.get(w) for w in (_split(string))]
+        no_unknown_words = [self.tokenizer.word_index.get(UNKNOWN) if t is None else t for t in tokenized]
+
         max_len = self.max_context_length if max_len is None else max_len
         padding = 'post' if response else 'pre'
-        return pad_sequences(sequences=[seqs], maxlen=max_len, padding=padding, truncating=padding)
+        return pad_sequences(sequences=[no_unknown_words], maxlen=max_len, padding=padding, truncating=padding)[0]
 
     def save(self, folderName='build/'):
         os.makedirs(folderName, exist_ok=True)
@@ -72,7 +77,7 @@ class TextPreprocessor():
 
 class PreprocessorBuilder():
     def __init__(self):
-        self.vocab = set([STX, ETX])
+        self.vocab = set([STX, ETX, UNKNOWN])
         self.max_context_length = 0
 
     def fit(self, string):
@@ -81,6 +86,6 @@ class PreprocessorBuilder():
         self.max_context_length = max(self.max_context_length, len(words))
 
     def build(self) -> TextPreprocessor:
-        tokenizer = Tokenizer(filters=[])
+        tokenizer = Tokenizer(filters=[], num_words=500)
         tokenizer.fit_on_texts(self.vocab)
         return TextPreprocessor(tokenizer, self.max_context_length)
