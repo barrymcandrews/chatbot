@@ -2,18 +2,19 @@ import os
 import re
 from functools import reduce
 from dataclasses import dataclass
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Dict
 from keras.preprocessing.text import Tokenizer
 import tensorflow as tf
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
-from chatbot.preprocessor import TextPreprocessor, PreprocessorBuilder
+from chatbot.preprocessor import TextPreprocessor
 from convokit import Corpus, download
 from convokit.text_processing.textProcessor import TextProcessor
 from convokit.text_processing.textParser import TextParser
 from itertools import tee
 import json
 from tqdm import tqdm
+from nltk import FreqDist
 
 
 @dataclass
@@ -33,7 +34,32 @@ class ChatbotDataset():
         return ChatbotDataset(d[0], d[1], d[2])
 
 
-ChatbotData = Tuple[ChatbotDataset, TextPreprocessor]
+@dataclass
+class Dictionary():
+    index_to_word: List[str]
+    word_to_index: Dict[str, int]
+
+    def size(self):
+        return len(self.index_to_word)
+
+    def save(self, filename='build/dictionary.json'):
+        print('Saving dictionary...')
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(json.dumps({
+                'index_to_word': self.index_to_word,
+                'word_to_index': self.word_to_index
+            }))
+        print('Dictionary saved to ' + filename)
+
+    @staticmethod
+    def load(filename='build/dictionary.json'):
+       with open(filename) as f:
+        data = json.loads(f.read())
+        return Dictionary(data['index_to_word'], data['word_to_index'])
+
+
+ChatbotData = Tuple[ChatbotDataset, Dictionary, int]
 
 
 def _pairwise(iterable):
@@ -43,23 +69,43 @@ def _pairwise(iterable):
     return zip(a, b)
 
 
+def _split(string):
+        string = re.sub(r'<[^>]*>|\*|\[|\]|"', ' ', string)
+        string = re.sub(r'(,)', ' , ', string)
+        string = re.sub(r'(;)', ' ; ', string)
+        string = re.sub(r'(\.)', ' . ', string)
+        string = re.sub(r'(\?)', ' ? ', string)
+        string = re.sub(r'(\!)', ' ! ' , string)
+        string = re.sub(r'[\-]', ' - ' , string)
+        string = re.sub(r'[\-]{2,}', ' -- ' , string)
+        string = re.sub(r'[ \t]{2,}', ' ', string)
+        return string.strip().lower().split(' ')
+
+
 def load_movie_dataset() -> ChatbotData:
     corpus = Corpus(filename=download("movie-corpus"))
 
-    # Preprocessor
-    preprocessor = None
-    if TextPreprocessor.build_exists():
-        print("Build found. Using vocabulary from previous build.")
-        preprocessor = TextPreprocessor.load()
+    corpus = TextProcessor(_split, 'words').transform(corpus)
+
+    # Dictionary
+    dictionary = None
+    if os.path.exists('build/dictionary.json'):
+        dictionary = Dictionary.load()
     else:
-        print("Building preprocessor for vocabulary.")
-        builder = PreprocessorBuilder()
-        all_utterances = [u for u in corpus.iter_utterances()]
-        for utterance in tqdm(all_utterances):
-            builder.fit(utterance.text)
-        preprocessor = builder.build()
-        preprocessor.save()
-        print("Preprocessor build saved.")
+        print('Building dictionary.')
+        all_words = [word for u in corpus.iter_utterances() for word in u.meta['words']]
+        word_freq = FreqDist(all_words)
+        print("Found %d unique word tokens." % len(word_freq.items()))
+
+        vocab = word_freq.most_common(7000 - 4)
+        index_to_word = ['', '<stx>', '<etx>', '<unk>']
+        index_to_word.extend([x[0] for x in vocab])
+        word_to_index = {w: i for i, w in enumerate(index_to_word)}
+        dictionary = Dictionary(index_to_word, word_to_index)
+        dictionary.save()
+
+    MAX_LEN = 50
+    preprocessor = TextPreprocessor(dictionary, MAX_LEN)
 
     # Dataset
     dataset = None
@@ -74,17 +120,19 @@ def load_movie_dataset() -> ChatbotData:
             all_utterances.reverse()
 
             for (u1, u2) in _pairwise(all_utterances):
-                contexts.append(u1.text)
-                responses.append(u2.text)
+                contexts.append(u1.meta['words'])
+                responses.append(u2.meta['words'])
 
         print("Tokenizing contexts (x)")
-        x = [preprocessor.prepare(text) for text in tqdm(contexts)]
+        x = [preprocessor.prepare(tokens) for tokens in tqdm(contexts)]
         print("Tokenizing responses (y)")
-        y = [preprocessor.prepare(text, response=True, add_start=True) for text in tqdm(responses)]
+        y = [preprocessor.prepare(tokens, response=True, add_start=True) for tokens in tqdm(responses)]
         print("Tokenizing responses (z)")
-        z = [preprocessor.prepare(text, response=True, add_end=True) for text in tqdm(responses)]
+        z = [preprocessor.prepare(tokens, response=True, add_end=True) for tokens in tqdm(responses)]
+
+        print("")
 
         dataset = ChatbotDataset(np.array(x), np.array(y), np.array(z))
         dataset.save()
 
-    return (dataset, preprocessor)
+    return (dataset, dictionary, MAX_LEN)

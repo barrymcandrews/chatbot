@@ -36,12 +36,12 @@ def summary():
 @click.option('--model-dir', type=str, default='build/model')
 @click.option('--k-folds', type=int, default=10)
 def train(epochs, learning_rate, batch_size, gpu_count, model_dir, k_folds):
-    (dataset, preprocessor) = load_movie_dataset()
-    print("Vocabulary Size: " + str(preprocessor.get_vocabulary_size()))
-    print("Max Context Length: " + str(preprocessor.max_context_length))
+    (dataset, dictionary, max_len) = load_movie_dataset()
+    print("Vocabulary Size: " + str(dictionary.size()))
+    print("Max Context Length: " + str(max_len))
     chatbot_model = Chatbot(
-        preprocessor.get_vocabulary_size(),
-        preprocessor.max_context_length
+        dictionary.size(),
+        max_len
     )
     chatbot_model.compile(
         optimizer=keras.optimizers.Adam(),
@@ -74,7 +74,7 @@ def train(epochs, learning_rate, batch_size, gpu_count, model_dir, k_folds):
 def chat(build_dir):
     chatbot_model: Model = keras.models.load_model(build_dir + '/model')
     text_preprocessor: TextPreprocessor = TextPreprocessor.load()
-    start = text_preprocessor.prepare('<STX>',  is_response=True)
+    start = text_preprocessor.prepare('<STX>',  response=True)
     while True:
         context = input('you: ')
         prepared = text_preprocessor.prepare(context)
