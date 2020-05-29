@@ -15,7 +15,12 @@ from itertools import tee
 import json
 from tqdm import tqdm
 from nltk import FreqDist
+import wget
+import zipfile
 
+STX = 1
+ETX = 2
+UNK = 3
 
 @dataclass
 class ChatbotDataset():
@@ -38,6 +43,7 @@ class ChatbotDataset():
 class Dictionary():
     index_to_word: List[str]
     word_to_index: Dict[str, int]
+    embeddings_matrix: np.ndarray = None
 
     def size(self):
         return len(self.index_to_word)
@@ -106,6 +112,35 @@ def load_movie_dataset() -> ChatbotData:
 
     MAX_LEN = 50
     preprocessor = TextPreprocessor(dictionary, MAX_LEN)
+
+    # Embeddings
+    if not os.path.exists('build/glove/glove.6B.200d.txt'):
+        print("Glove embeddings not found. Downloading...")
+        wget.download('http://nlp.stanford.edu/data/wordvecs/glove.6B.zip', out='build')
+        with zipfile.ZipFile('build/glove.6B.zip', 'r') as zip_ref:
+            zip_ref.extractall('build/glove')
+
+    print("\nLoading glove embeddings")
+    embeddings_index = {}
+    with open(os.path.join('build/glove/glove.6B.200d.txt')) as f:
+        for line in tqdm(f):
+            values = line.split()
+            word = values[0]
+            coefs = np.asarray(values[1:], dtype='float32')
+            embeddings_index[word] = coefs
+
+    print('Found %s word vectors in glove file.' % len(embeddings_index))
+    embeddings_matrix = np.zeros((dictionary.size(), 200))
+
+    # Using the Glove embedding:
+    print("Mapping embeddings to dictionary")
+    for word, i in tqdm(dictionary.word_to_index.items()):
+        embedding_vector = embeddings_index.get(word)
+
+        if embedding_vector is not None:
+            # words not found in embedding index will be all-zeros.
+            embeddings_matrix[i] = embedding_vector
+    dictionary.embeddings_matrix = [embeddings_matrix]
 
     # Dataset
     dataset = None

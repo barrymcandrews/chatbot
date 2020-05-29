@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers, Model
 
-from chatbot.data import load_movie_dataset, ChatbotData
+from chatbot.data import load_movie_dataset, ChatbotData, Dictionary
 from chatbot.models import Chatbot
 from chatbot.preprocessor import TextPreprocessor
 from sklearn.model_selection import KFold
@@ -73,11 +73,12 @@ def train(epochs, learning_rate, batch_size, gpu_count, model_dir, k_folds):
 @click.option('--build-dir', type=str, default='build')
 def chat(build_dir):
     chatbot_model: Model = keras.models.load_model(build_dir + '/model')
-    text_preprocessor: TextPreprocessor = TextPreprocessor.load()
-    start = text_preprocessor.prepare('<STX>',  response=True)
+    dictionary = Dictionary.load()
+    preprocessor = TextPreprocessor(dictionary, 50)
+    start = preprocessor.prepare()
     while True:
         context = input('you: ')
-        prepared = text_preprocessor.prepare(context)
+        prepared = preprocessor.prepare(context)
         print('input: ' + str(prepared))
         print('start: ' + str(start))
 

@@ -8,10 +8,11 @@ import argparse
 import os
 
 
-def Chatbot(vocab_length: int, max_context: int):
+def Chatbot(vocab_length: int, max_context: int, embeddings=None):
     SharedEmbedding = Embedding(
         input_dim=vocab_length,
         input_length=max_context,
+        weights=embeddings,
         output_dim=200
     )
 
