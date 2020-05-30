@@ -82,7 +82,7 @@ def _split(string):
         string = re.sub(r'(\.)', ' . ', string)
         string = re.sub(r'(\?)', ' ? ', string)
         string = re.sub(r'(\!)', ' ! ' , string)
-        string = re.sub(r'[\-]', ' - ' , string)
+        string = re.sub(r'[\-]', ' ' , string)
         string = re.sub(r'[\-]{2,}', ' -- ' , string)
         string = re.sub(r'[ \t]{2,}', ' ', string)
         return string.strip().lower().split(' ')
@@ -155,8 +155,9 @@ def load_movie_dataset() -> ChatbotData:
             all_utterances.reverse()
 
             for (u1, u2) in _pairwise(all_utterances):
-                contexts.append(u1.meta['words'])
-                responses.append(u2.meta['words'])
+                if len(u2.meta['words']) < 49 and '<unk>' not in u2.meta['words']:
+                    contexts.append(u1.meta['words'])
+                    responses.append(u2.meta['words'])
 
         print("Tokenizing contexts (x)")
         x = [preprocessor.prepare(tokens) for tokens in tqdm(contexts)]
