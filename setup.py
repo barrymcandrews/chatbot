@@ -24,6 +24,8 @@ setuptools.setup(
         'numpy',
         'Click',
         'convokit'
+        'nltk'
+        'wget'
     ],
     entry_points='''
         [console_scripts]

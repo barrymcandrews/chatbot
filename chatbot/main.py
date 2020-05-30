@@ -75,30 +75,29 @@ def chat(build_dir):
     chatbot_model: Model = keras.models.load_model(build_dir + '/model')
     dictionary = Dictionary.load()
     preprocessor = TextPreprocessor(dictionary, 50)
-    start = preprocessor.prepare()
     while True:
         context = input('you: ')
-        prepared = preprocessor.prepare(context)
-        print('input: ' + str(prepared))
-        print('start: ' + str(start))
+        context_tokens = tf.convert_to_tensor([preprocessor.prepare(context.split(' '))])
 
-        response = "<stx>"
+        response = ["<stx>"]
         finished = False
-        i = 0
+        i = 3
         while not finished:
-            processed_response = text_preprocessor.prepare(response, max_len=5)
-            result = chatbot_model.predict([prepared, processed_response])
+            processed_response = preprocessor.prepare(response, response=True)
+            resp = tf.convert_to_tensor([processed_response])
 
-            predicted_response = [np.argmax(x) for x in result[0]]
+            result = chatbot_model.predict([context_tokens, resp])
 
-            next_word = predicted_response[i]
-            print(text_preprocessor.tokenizer.sequences_to_texts([[next_word]]))
-            if next_word == 0 or i == 4:
-                finished = True
+            next_word_index = np.argmax(result[0][i])
+            # tops = sorted(range(len(result[0][i])), key = lambda sub: result[0][i][sub])[-10:]
+            # print([dictionary.index_to_word[t] for t in tops])
 
-            response = response + ' ' + text_preprocessor.tokenizer.sequences_to_texts([[next_word]])[0]
-            print(response)
+            next_word = dictionary.index_to_word[next_word_index]
+            response.append(next_word)
+
+            finished = next_word_index == 0 or next_word_index == 2 or i == 49
             i = i + 1
+        print('bot: ' + ' '.join(response))
 
 
 
