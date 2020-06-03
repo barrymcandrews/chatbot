@@ -8,10 +8,13 @@ from os.path import exists
 import os
 import copy
 import re
+from enum import IntEnum
 
-STX = 1
-ETX = 2
-UNK = 3
+
+class Token(IntEnum):
+    STX = 1
+    ETX = 2
+    UNK = 3
 
 class TextPreprocessor():
     def __init__(self, dictionary, max_num_tokens):
@@ -19,14 +22,14 @@ class TextPreprocessor():
         self.max_num_tokens = max_num_tokens
 
     def tokenize(self, words):
-        return [self.dictionary.word_to_index.get(w) or UNK for w in words]
+        return [self.dictionary.word_to_index.get(w) or Token.UNK for w in words]
 
     def prepare(self, words: List[str], response=False, add_start=False, add_end=False, max_len=None):
         tokenized = self.tokenize(words)
         if add_start:
-            tokenized.insert(0, STX)
+            tokenized.insert(0, Token.STX)
         if add_end:
-            tokenized.append(ETX)
+            tokenized.append(Token.ETX)
 
         max_len = self.max_num_tokens if max_len is None else max_len
         padding = 'post' if response else 'pre'

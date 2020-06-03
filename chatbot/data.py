@@ -7,7 +7,7 @@ from keras.preprocessing.text import Tokenizer
 import tensorflow as tf
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
-from chatbot.preprocessor import TextPreprocessor
+from chatbot.preprocessor import TextPreprocessor, Token
 from convokit import Corpus, download
 from convokit.text_processing.textProcessor import TextProcessor
 from convokit.text_processing.textParser import TextParser
@@ -17,10 +17,8 @@ from tqdm import tqdm
 from nltk import FreqDist
 import wget
 import zipfile
+import yaml
 
-STX = 1
-ETX = 2
-UNK = 3
 
 @dataclass
 class ChatbotDataset():
@@ -75,23 +73,60 @@ def _pairwise(iterable):
     return zip(a, b)
 
 
-def _split(string):
-        string = re.sub(r'<[^>]*>|\*|\[|\]|"', ' ', string)
-        string = re.sub(r'(,)', ' , ', string)
-        string = re.sub(r'(;)', ' ; ', string)
-        string = re.sub(r'(\.)', ' . ', string)
-        string = re.sub(r'(\?)', ' ? ', string)
-        string = re.sub(r'(\!)', ' ! ' , string)
-        string = re.sub(r'[\-]', ' ' , string)
-        string = re.sub(r'[\-]{2,}', ' -- ' , string)
-        string = re.sub(r'[ \t]{2,}', ' ', string)
-        return string.strip().lower().split(' ')
+def clean(string: str) -> List[str]:
+    "converts text into macine-readable tokens"
+    string = re.sub(r'<[^>]*>|[*\[\]#@^&$()\":<>{}`+=~|]"', ' ', string)
+    string = re.sub(r'(,)', ' ', string)
+    string = re.sub(r'(;)', ' ', string)
+    string = re.sub(r'(\.)', ' . ', string)
+    string = re.sub(r'(\?)', ' ? ', string)
+    string = re.sub(r'(\!)', ' ! ' , string)
+    string = re.sub(r'[\-]', ' ' , string)
+    string = re.sub(r'[\-]{2,}', ' -- ' , string)
+    string = re.sub(r'[ \t]{2,}', ' ', string)
+
+    #contractions
+    string = string.lower()
+    string = re.sub(r"i'm", "i am", string)
+    string = re.sub(r"he's", "he is", string)
+    string = re.sub(r"she's", "she is", string)
+    string = re.sub(r"it's", "it is", string)
+    string = re.sub(r"that's", "that is", string)
+    string = re.sub(r"what's", "that is", string)
+    string = re.sub(r"where's", "where is", string)
+    string = re.sub(r"how's", "how is", string)
+    string = re.sub(r"\'ll", " will", string)
+    string = re.sub(r"\'ve", " have", string)
+    string = re.sub(r"\'re", " are", string)
+    string = re.sub(r"\'d", " would", string)
+    string = re.sub(r"\'re", " are", string)
+    string = re.sub(r"won't", "will not", string)
+    string = re.sub(r"can't", "cannot", string)
+    string = re.sub(r"n't", " not", string)
+    string = re.sub(r"n'", "ng", string)
+    string = re.sub(r"'bout", "about", string)
+    string = re.sub(r"'til", "until", string)
+    string = re.sub(r"[-()\"#/@;:<>{}`+=~|]", "", string)
+    return string.strip().split(' ')
 
 
 def load_movie_dataset() -> ChatbotData:
     corpus = Corpus(filename=download("movie-corpus"))
+    corpus = None
 
-    corpus = TextProcessor(_split, 'words').transform(corpus)
+    corpus = TextProcessor(clean, 'words').transform(corpus)
+
+    # conversations = []
+    # utts = []
+    # with open('data/chatterbot/greetings.yml') as f:
+    #     cs = yaml.load(f.read())['conversations']
+    #     for c in cs:
+    #         conversations.append([
+    #             clean(c[0]),
+    #             clean(c[1])
+    #         ])
+    #         utts.append(clean(c[0]))
+    #         utts.append(clean(c[1]))
 
     # Dictionary
     dictionary = None
@@ -100,6 +135,7 @@ def load_movie_dataset() -> ChatbotData:
     else:
         print('Building dictionary.')
         all_words = [word for u in corpus.iter_utterances() for word in u.meta['words']]
+        # all_words = [word for u in utts for word in u]
         word_freq = FreqDist(all_words)
         print("Found %d unique word tokens." % len(word_freq.items()))
 
@@ -110,11 +146,11 @@ def load_movie_dataset() -> ChatbotData:
         dictionary = Dictionary(index_to_word, word_to_index)
         dictionary.save()
 
-    MAX_LEN = 50
+    MAX_LEN = 20
     preprocessor = TextPreprocessor(dictionary, MAX_LEN)
 
     # Embeddings
-    if not os.path.exists('build/glove/glove.6B.200d.txt'):
+    if not os.path.exists('build/glove/glove.6B.300d.txt'):
         print("Glove embeddings not found. Downloading...")
         wget.download('http://nlp.stanford.edu/data/wordvecs/glove.6B.zip', out='build')
         with zipfile.ZipFile('build/glove.6B.zip', 'r') as zip_ref:
@@ -122,7 +158,7 @@ def load_movie_dataset() -> ChatbotData:
 
     print("\nLoading glove embeddings")
     embeddings_index = {}
-    with open(os.path.join('build/glove/glove.6B.200d.txt')) as f:
+    with open(os.path.join('build/glove/glove.6B.300d.txt')) as f:
         for line in tqdm(f):
             values = line.split()
             word = values[0]
@@ -130,7 +166,7 @@ def load_movie_dataset() -> ChatbotData:
             embeddings_index[word] = coefs
 
     print('Found %s word vectors in glove file.' % len(embeddings_index))
-    embeddings_matrix = np.zeros((dictionary.size(), 200))
+    embeddings_matrix = np.zeros((dictionary.size(), 300))
 
     # Using the Glove embedding:
     print("Mapping embeddings to dictionary")
@@ -159,14 +195,20 @@ def load_movie_dataset() -> ChatbotData:
                     contexts.append(u1.meta['words'])
                     responses.append(u2.meta['words'])
 
+        # for conversation in conversations:
+        #     contexts.append(conversation[0])
+        #     responses.append(conversation[1])
+
+        for i in range(len(responses)):
+            if responses[i] == Token.UNK:
+                raise RuntimeError("Unknown token is in response data!")
+
         print("Tokenizing contexts (x)")
         x = [preprocessor.prepare(tokens) for tokens in tqdm(contexts)]
         print("Tokenizing responses (y)")
         y = [preprocessor.prepare(tokens, response=True, add_start=True) for tokens in tqdm(responses)]
         print("Tokenizing responses (z)")
         z = [preprocessor.prepare(tokens, response=True, add_end=True) for tokens in tqdm(responses)]
-
-        print("")
 
         dataset = ChatbotDataset(np.array(x), np.array(y), np.array(z))
         dataset.save()
