@@ -23,8 +23,8 @@ setuptools.setup(
         'tensorflow-gpu',
         'numpy',
         'Click',
-        'convokit'
-        'nltk'
+        'convokit',
+        'nltk',
         'wget'
     ],
     entry_points='''
