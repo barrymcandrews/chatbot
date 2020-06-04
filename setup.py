@@ -25,7 +25,9 @@ setuptools.setup(
         'Click',
         'convokit',
         'nltk',
-        'wget'
+        'wget',
+        'boto3',
+        'inquirer'
     ],
     entry_points='''
         [console_scripts]

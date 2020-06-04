@@ -7,6 +7,8 @@ from chatbot.data import load_movie_dataset, ChatbotData, Dictionary
 from chatbot.models import Chatbot
 from chatbot.preprocessor import TextPreprocessor, Token
 from sklearn.model_selection import KFold
+from chatbot.builds import builds as build_command
+from chatbot import builds
 import argparse
 import os
 import numpy as np
@@ -18,6 +20,7 @@ from sklearn.utils import class_weight
 @click.group()
 def cli():
     pass
+
 
 @cli.command()
 def summary():
@@ -36,15 +39,16 @@ def summary():
 @click.option('--batch-size', type=int, default=128)
 @click.option('--build-dir', type=str, default='build')
 @click.option('--k-folds', type=int, default=10)
-@click.option('--cloud-dir', type=str, default=None)
-def train(epochs, learning_rate, batch_size, build_dir, k_folds, job_dir):
+@click.option('--upload', is_flag=True)
+def train(epochs, learning_rate, batch_size, build_dir, k_folds, upload):
     (dataset, dictionary, max_len) = load_movie_dataset()
     print("Vocabulary Size: " + str(dictionary.size()))
     print("Max Context Length: " + str(max_len))
     print("Dataset Length: " + str(len(dataset.x)))
     chatbot_model = Chatbot(
         dictionary.size(),
-        max_len
+        max_len,
+        embeddings=dictionary.get_embeddings()
     )
     chatbot_model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=learning_rate),
@@ -81,6 +85,8 @@ def train(epochs, learning_rate, batch_size, build_dir, k_folds, job_dir):
 
     chatbot_model.save(build_dir + '/model')
     print('Model saved to ' + build_dir + '/model')
+    if upload:
+        builds.upload_build()
 
 
 @cli.command()
@@ -121,7 +127,7 @@ def chat(build_dir):
 
         print('bot: ' + ' '.join(response))
 
-
+cli.add_command(build_command)
 
 if __name__ == '__main__':
     cli()
