@@ -2,9 +2,9 @@
 A Seq2seq chatbot written in python using tensorflow and keras.
 
 ### About
-As the owner of a [chat website](https://github.com/barrymcandrews/raven-iac) and as an avid Westworld fan, I figured I'd take a try at creating my own chatbot.
+As the creator of a [chat website](https://github.com/barrymcandrews/raven-iac) and as an avid Westworld fan, I figured I'd take a try at creating my own chatbot.
 
-The goal of this project was to train a chatbot using my text messages, so that the chatbot would resemble the way I speak. Along the way I discovered that my text messages were not an amazing dataset, so I pulled in the [Cornell Movie Dialogs](https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html) that seems to be very popular for chatbots.
+The goal of this project was to train a chatbot using my text messages, so that the chatbot would resemble the way I speak. Along the way, I discovered that my text messages were not an amazing dataset, so I pulled in the [Cornell Movie Dialogs](https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html) which seems to be very popular for chatbots.
 
 ## Setup
 To setup the project, clone this repository and run the `setup.py` file:
