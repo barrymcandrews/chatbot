@@ -10,14 +10,8 @@ import inquirer
 
 BUCKET_NAME = 'sagemaker-chatbot-builds'
 
-s3 = boto3.client('s3',
-    aws_access_key_id='AKIAZLAHKELOTSZOCYXC',
-    aws_secret_access_key='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'
-    )
-s3_resource = boto3.resource('s3',
-    aws_access_key_id='AKIAZLAHKELOTSZOCYXC',
-    aws_secret_access_key='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'
-)
+s3 = boto3.client('s3')
+s3_resource = boto3.resource('s3')
 bucket = s3_resource.Bucket(BUCKET_NAME)
 
 
