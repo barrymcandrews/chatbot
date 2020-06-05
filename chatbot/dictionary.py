@@ -27,7 +27,7 @@ class Dictionary():
 
         print("\nLoading glove embeddings")
         embeddings_index = {}
-        with open(os.path.join('build/.glove/glove.6B.300d.txt')) as f:
+        with open(os.path.join('build/.glove/glove.6B.300d.txt'), encoding='utf-8') as f:
             for line in tqdm(f):
                 values = line.split()
                 word = values[0]
@@ -59,7 +59,7 @@ class Dictionary():
 
     @staticmethod
     def load(filename='build/dictionary.json'):
-       with open(filename) as f:
+       with open(filename, encoding='utf-8') as f:
         data = json.loads(f.read())
         return Dictionary(data['index_to_word'], data['word_to_index'])
 

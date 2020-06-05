@@ -10,15 +10,23 @@ import inquirer
 
 BUCKET_NAME = 'sagemaker-chatbot-builds'
 
-s3 = boto3.client('s3')
-s3_resource = boto3.resource('s3')
+s3 = boto3.client('s3',
+    aws_access_key_id='AKIAZLAHKELOTSZOCYXC',
+    aws_secret_access_key='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'
+    )
+s3_resource = boto3.resource('s3',
+    aws_access_key_id='AKIAZLAHKELOTSZOCYXC',
+    aws_secret_access_key='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'
+)
 bucket = s3_resource.Bucket(BUCKET_NAME)
 
 
 def get_builds() -> List[str]:
     paginated_results = s3.get_paginator("list_objects_v2").paginate(Bucket=BUCKET_NAME)
     all_objects = [e['Key'] for p in paginated_results for e in p['Contents']]
-    return list(set([o.split('/')[0] for o in all_objects if len(o.split('/')) > 1]))
+    folders = list(set([o.split('/')[0] for o in all_objects if len(o.split('/')) > 1]))
+    folders.sort()
+    return folders
 
 
 def upload_build(name=('build_' + datetime.now().strftime("%d_%m_%Y-%H_%M_%S"))):

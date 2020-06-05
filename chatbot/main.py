@@ -51,12 +51,11 @@ def train(epochs, learning_rate, batch_size, build_dir, k_folds, upload):
         embeddings=dictionary.get_embeddings()
     )
     chatbot_model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=learning_rate),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         weighted_metrics=['sparse_categorical_accuracy']
     )
     chatbot_model.summary()
-
 
     for e in range(epochs):
         kfold = KFold(n_splits=k_folds)

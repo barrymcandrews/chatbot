@@ -83,7 +83,7 @@ def load_movie_dataset() -> ChatbotData:
 
     # Dataset
     dataset = None
-    if os.path.exists('build/dataset.npy'):
+    if os.path.exists('build/.dataset.npy'):
         dataset = ChatbotDataset.load()
     else:
         print("Tokenizing data.")
