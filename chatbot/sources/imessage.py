@@ -65,10 +65,10 @@ def build_imessage_corpus() -> Corpus:
 
 def get_imessage_corpus() -> Corpus:
     try:
-        return Corpus(filename='imessages')
+        return Corpus(filename='build/imessages')
     except:
         imessage_corpus = build_imessage_corpus()
-        imessage_corpus.dump(name='imessages', increment_version=False)
+        imessage_corpus.dump(name='imessages', increment_version=False, base_path='build')
         return imessage_corpus
 
 
