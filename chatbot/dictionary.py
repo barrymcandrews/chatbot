@@ -28,7 +28,7 @@ class Dictionary():
         print("\nLoading glove embeddings")
         embeddings_index = {}
         with open(os.path.join('build/.glove/glove.6B.300d.txt'), encoding='utf-8') as f:
-            for line in tqdm(f):
+            for line in tqdm(f, total=400000):
                 values = line.split()
                 word = values[0]
                 coefs = np.asarray(values[1:], dtype='float32')
