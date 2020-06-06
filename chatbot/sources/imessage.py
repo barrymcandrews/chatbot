@@ -1,11 +1,12 @@
 import sqlite3
 import pandas as pd
 from convokit import Corpus, Speaker, Utterance
+import os
 
 
 def build_imessage_corpus() -> Corpus:
     print('Building corpus from iMessages...')
-    conn = sqlite3.connect('/Users/barrymcandrews/Library/Messages/chat.db')
+    conn = sqlite3.connect(os.path.expanduser('~/Library/Messages/chat.db'))
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
