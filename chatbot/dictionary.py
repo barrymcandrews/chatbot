@@ -68,8 +68,9 @@ class Dictionary():
         word_freq = FreqDist(all_words)
         print("Found %d unique word tokens." % len(word_freq.items()))
 
-        vocab = word_freq.most_common(7000 - 4)
+        vocab = word_freq.most_common(7000)
         index_to_word = ['', '<stx>', '<etx>', '<unk>']
-        index_to_word.extend([x[0] for x in vocab])
+        words = [x[0] for x in vocab if x[0] not in index_to_word]
+        index_to_word.extend(words[:6996])
         word_to_index = {w: i for i, w in enumerate(index_to_word)}
         return Dictionary(index_to_word, word_to_index)
