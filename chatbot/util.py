@@ -3,8 +3,6 @@ import re
 
 def clean(string: str) -> List[str]:
     "converts text into machine-readable tokens"
-    if string == '' or string is None:
-        return ['<img>']
 
     string = re.sub(r'<[^>]*>', ' ', string)
     string = re.sub(r'(\.){2,}', ' <elipsis> ', string)
@@ -16,7 +14,6 @@ def clean(string: str) -> List[str]:
     string = re.sub(r'(:\))|(\(:)', ' 😀 ', string)
     string = re.sub(r'(:\()|(\):)', ' 🙁 ', string)
     string = re.sub(r'[*\[\]#@^&$()\":{}`+=~|\|]"', ' ', string)
-    # string = re.sub(r'([0-9])', r' \g<1> ', string)
     string = re.sub(r'(,)', ' , ', string)
     string = re.sub(r'(\*)', ' * ', string)
     string = re.sub(r'(\")', ' " ', string)
@@ -29,7 +26,6 @@ def clean(string: str) -> List[str]:
     string = re.sub(r'(\!){1,}', ' ! ' , string)
     string = re.sub(r'[\n\r]', ' ' , string)
     string = re.sub(r'[\-]', ' ' , string)
-    # string = re.sub(r'[\\|\/]', ' ' , string)
     string = re.sub(r'[\-]{2,}', ' -- ' , string)
     string = re.sub(r'([\ufff9-\uffff])', r' <unk> ', string, flags=re.UNICODE) # Unknown Character
     string = re.sub(r'([\U00010000-\U0010ffff])', r' \g<1> ', string, flags=re.UNICODE) # Emojis
