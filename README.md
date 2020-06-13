@@ -30,11 +30,13 @@ $ bot train --epochs 100
 ```
 #### Available Options:
 * `--epochs <int>` (Default: 10)
-* `--learning-rate <int>` (Default: 0.01)
+* `--learning-rate <int>` (Default: 0.00005)
 * `--batch-size <int>` (Default: 128)
 * `--build-dir <path>` (Default: "./build")
 * `--k-folds` (Default: 10)
-* `--upload`
+* `--starting-build` (Default: None)
+* `--upload` (Default: False)
+* `--continue` (Default: False)
 
 
 
