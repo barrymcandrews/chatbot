@@ -20,7 +20,7 @@ import json
 from chatbot.preprocessor import TextPreprocessor, Token
 from chatbot.dictionary import Dictionary
 from chatbot.util import clean
-
+from chatbot.sources.imessage import get_imessage_corpus
 
 @dataclass
 class ChatbotDataset():
@@ -50,22 +50,24 @@ def _pairwise(iterable):
     return zip(a, b)
 
 
-def load_movie_dataset() -> ChatbotData:
-    corpus = Corpus(filename=download("movie-corpus"))
+def load_dataset() -> ChatbotData:
+    # corpus = Corpus(filename=download("movie-corpus"))
+    corpus = get_imessage_corpus()
 
     corpus = TextProcessor(clean, 'words').transform(corpus)
 
-    # conversations = []
-    # utts = []
-    # with open('data/chatterbot/greetings.yml') as f:
-    #     cs = yaml.load(f.read())['conversations']
-    #     for c in cs:
-    #         conversations.append([
-    #             clean(c[0]),
-    #             clean(c[1])
-    #         ])
-    #         utts.append(clean(c[0]))
-    #         utts.append(clean(c[1]))
+    conversations = []
+    utts = []
+    for path in ['data/manual/greetings.yml', 'data/manual/identity.yml', 'data/manual/meta.yml']:
+        with open(path) as f:
+            cs = yaml.load(f.read())['conversations']
+            for c in cs:
+                conversations.append([
+                    clean(c[0]),
+                    clean(c[1])
+                ])
+                utts.append(clean(c[0]))
+                utts.append(clean(c[1]))
 
     # Dictionary
     dictionary = None
@@ -74,11 +76,11 @@ def load_movie_dataset() -> ChatbotData:
     else:
         print('Building dictionary.')
         all_words = [word for u in corpus.iter_utterances() for word in u.meta['words']]
-        # all_words = [word for u in utts for word in u]
+        all_words.extend([word for u in utts for word in u])
         dictionary = Dictionary.from_word_list(all_words)
         dictionary.save()
 
-    MAX_LEN = 20
+    MAX_LEN = 22
     preprocessor = TextPreprocessor(dictionary, MAX_LEN)
 
     # Dataset
@@ -86,21 +88,28 @@ def load_movie_dataset() -> ChatbotData:
     if os.path.exists('build/.dataset.npy'):
         dataset = ChatbotDataset.load()
     else:
+        corpus = TextProcessor(lambda text: preprocessor.tokenize(clean(text)), 'tokens').transform(corpus)
         print("Tokenizing data.")
         contexts = []
         responses = []
         for conversation in corpus.iter_conversations():
             all_utterances = [u for u in conversation.iter_utterances()]
-            all_utterances.reverse()
 
             for (u1, u2) in _pairwise(all_utterances):
-                if len(u2.meta['words']) < 49 and '<unk>' not in u2.meta['words']:
+                if len(u1.meta['words']) < MAX_LEN \
+                    and len(u2.meta['words']) < MAX_LEN \
+                    and Token.UNK not in u2.meta['tokens'] \
+                    and '*' not in u1.meta['words'] \
+                    and u1.meta['is_from_me'] == '0' \
+                    and u2.meta['is_from_me'] == '1':
+
                     contexts.append(u1.meta['words'])
                     responses.append(u2.meta['words'])
 
-        # for conversation in conversations:
-        #     contexts.append(conversation[0])
-        #     responses.append(conversation[1])
+        for _ in range(100):
+            for conversation in conversations:
+                contexts.append(conversation[0])
+                responses.append(conversation[1])
 
         for i in range(len(responses)):
             if responses[i] == Token.UNK:
@@ -109,9 +118,9 @@ def load_movie_dataset() -> ChatbotData:
         print("Tokenizing contexts (x)")
         x = [preprocessor.prepare(tokens) for tokens in tqdm(contexts)]
         print("Tokenizing responses (y)")
-        y = [preprocessor.prepare(tokens, response=True, add_start=True) for tokens in tqdm(responses)]
+        y = [preprocessor.prepare(tokens, response=True) for tokens in tqdm(responses)]
         print("Tokenizing responses (z)")
-        z = [preprocessor.prepare(tokens, response=True, add_end=True) for tokens in tqdm(responses)]
+        z = [preprocessor.prepare(tokens, response=True, add_start=False) for tokens in tqdm(responses)]
 
         dataset = ChatbotDataset(np.array(x), np.array(y), np.array(z))
         dataset.save()
