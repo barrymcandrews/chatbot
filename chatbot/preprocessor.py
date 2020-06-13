@@ -24,7 +24,7 @@ class TextPreprocessor():
     def tokenize(self, words):
         return [self.dictionary.word_to_index.get(w) or Token.UNK for w in words]
 
-    def prepare(self, words: List[str], response=False, add_start=False, add_end=False, max_len=None):
+    def prepare(self, words: List[str], response=False, add_start=True, add_end=True, max_len=None):
         tokenized = self.tokenize(words)
         if add_start:
             tokenized.insert(0, Token.STX)
