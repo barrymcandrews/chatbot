@@ -48,7 +48,13 @@ def build_imessage_corpus() -> Corpus:
         root_msg = chat_messages.iloc[0]
         for i in range(num_messages):
             msg = chat_messages.iloc[i]
-            last_msg_id = chat_messages.iloc[i]['message_id'] if i != 0 else None
+            last_msg = chat_messages.iloc[i - 1] if i != 0 else None
+            last_msg_id = chat_messages.iloc[i - 1]['message_id'] if i != 0 else None
+
+            # Make a new conversation if more than an hour has passed between messages
+            if last_msg is not None and int(msg['date']) - int(chat_messages.iloc[i - 1]['date']) > 3.6e12:
+                root_msg = chat_messages.iloc[i]
+                last_msg_id = None
 
             msg_utt = Utterance(
                 id=msg['message_id'],
