@@ -7,10 +7,10 @@ As the creator of a [chat website](https://github.com/barrymcandrews/raven-iac) 
 The goal of this project was to train a chatbot using my text messages, so that the chatbot would resemble the way I speak. Along the way, I discovered that my text messages were not an amazing dataset, so I pulled in the [Cornell Movie Dialogs](https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html) which seems to be very popular for chatbots.
 
 ## Setup
-To setup the project, clone this repository and run the `setup.py` file:
+To setup the project, navigate to the root directory and use pip:
 
 ```
-$ python3 setup.py develop
+$ pip3 install -e .
 ```
 
 ## Training
