@@ -51,23 +51,10 @@ def _pairwise(iterable):
 
 
 def load_dataset() -> ChatbotData:
-    # corpus = Corpus(filename=download("movie-corpus"))
-    corpus = get_imessage_corpus()
+    corpus = Corpus(filename=download("movie-corpus"))
+    # corpus = get_imessage_corpus()
 
     corpus = TextProcessor(clean, 'words').transform(corpus)
-
-    # conversations = []
-    # utts = []
-    # for path in ['data/manual/greetings.yml', 'data/manual/identity.yml', 'data/manual/meta.yml']:
-    #     with open(path) as f:
-    #         cs = yaml.load(f.read())['conversations']
-    #         for c in cs:
-    #             conversations.append([
-    #                 clean(c[0]),
-    #                 clean(c[1])
-    #             ])
-    #             utts.append(clean(c[0]))
-    #             utts.append(clean(c[1]))
 
     # Dictionary
     dictionary = None
@@ -76,7 +63,6 @@ def load_dataset() -> ChatbotData:
     else:
         print('Building dictionary.')
         all_words = [word for u in corpus.iter_utterances() for word in u.meta['words']]
-        # all_words.extend([word for u in utts for word in u])
         dictionary = Dictionary.from_word_list(all_words)
         dictionary.save()
 
@@ -99,17 +85,13 @@ def load_dataset() -> ChatbotData:
                 if len(u1.meta['words']) < MAX_LEN \
                     and len(u2.meta['words']) < MAX_LEN \
                     and Token.UNK not in u2.meta['tokens'] \
-                    and '*' not in u1.meta['words'] \
-                    and u1.meta['is_from_me'] == '0' \
-                    and u2.meta['is_from_me'] == '1':
+                    and '*' not in u1.meta['words']:
+                    # and u1.meta['is_from_me'] == '0' \
+                    # and u2.meta['is_from_me'] == '1':
 
                     contexts.append(u1.meta['words'])
                     responses.append(u2.meta['words'])
 
-        # for _ in range(100):
-        #     for conversation in conversations:
-        #         contexts.append(conversation[0])
-        #         responses.append(conversation[1])
 
         for i in range(len(responses)):
             if responses[i] == Token.UNK:
