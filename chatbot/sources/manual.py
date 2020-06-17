@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from convokit import Corpus, Speaker, Utterance
 import os
 import yaml
@@ -8,7 +9,7 @@ def build_manual_corpus() -> Corpus:
 
     manual_files = []
     for root, dirs, files in os.walk('data/manual'):
-        manual_files.extend(files)
+        manual_files.extend([os.path.join(root, f) for f in files])
 
     conversations = []
     for path in manual_files:
