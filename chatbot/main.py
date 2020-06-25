@@ -37,13 +37,14 @@ def summary():
 @cli.command()
 @click.option('--epochs', type=int, default=10)
 @click.option('--learning-rate', type=float, default=0.00005)
-@click.option('--batch-size', type=int, default=128)
+@click.option('--batch-size', type=int, default=256)
 @click.option('--build-dir', type=str, default='build')
 @click.option('--k-folds', type=int, default=10)
 @click.option('--upload', is_flag=True)
 @click.option('--continue', '-c', 'continue_', is_flag=True)
 @click.option('--base-build', type=str, default=None)
-def train(epochs, learning_rate, batch_size, build_dir, k_folds, upload, continue_, base_build):
+@click.option('--prep', is_flag=True)
+def train(epochs, learning_rate, batch_size, build_dir, k_folds, upload, continue_, base_build, prep):
     if base_build:
         builds.download_build(base_build)
 
@@ -73,20 +74,22 @@ def train(epochs, learning_rate, batch_size, build_dir, k_folds, upload, continu
     # tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
     # Print out dataset for manual inspection
-    # with open('out.txt', 'w') as f:
-    #     for n in range(len(dataset.x)):
-    #         w_x = [dictionary.index_to_word[x_i] for x_i in dataset.x[n]]
-    #         w_y = [dictionary.index_to_word[y_i] for y_i in dataset.y[n]]
-    #         f.write("\n%s\n%s\n" %  (" ".join(w_x).strip(), " ".join(w_y).strip()))
+    with open('out.txt', 'w', encoding='utf-8') as f:
+        for n in range(len(dataset.x)):
+            w_x = [dictionary.index_to_word[x_i] for x_i in dataset.x[n]]
+            w_y = [dictionary.index_to_word[y_i] for y_i in dataset.y[n]]
+            f.write("\n%s\n%s\n" %  (" ".join(w_x).strip(), " ".join(w_y).strip()))
 
+    if prep:
+        exit(0)
 
     for e in range(epochs):
-        kfold = KFold(n_splits=k_folds)
+        kfold = KFold(n_splits=k_folds, shuffle=True)
         k = 0
         for train_index, test_index in kfold.split(dataset.x):
 
             classes = np.unique(dataset.z)
-            weights_array = class_weight.compute_class_weight('balanced', classes=classes, y=np.ravel(dataset.z))
+            # weights_array = class_weight.compute_class_weight('balanced', classes=classes, y=np.ravel(dataset.z))
             weights = {i: 1 for i in range(dictionary.size())}
             # weights.update({classes[i]: w for i, w in enumerate(weights_array)})
             weights.update({Token.ETX: 1e-6})
@@ -117,15 +120,17 @@ def train(epochs, learning_rate, batch_size, build_dir, k_folds, upload, continu
 def chat(build_dir):
     chatbot_model: Model = keras.models.load_model(build_dir + '/model')
     dictionary = Dictionary.load()
-    MAX_LEN = 22
+    MAX_LEN = 30
     preprocessor = TextPreprocessor(dictionary, MAX_LEN)
 
     while True:
         context = input('you: ')
+        print("cleaned: " + str(clean(context)))
+        print("tokens: " + str(preprocessor.prepare(clean(context))))
         context_tokens = tf.convert_to_tensor([preprocessor.prepare(clean(context))])
 
-        response = []
-        for i in range(MAX_LEN):
+        response = ['<u0>']
+        for i in range(1, MAX_LEN):
             processed_response = preprocessor.prepare(response, response=True, add_end=False)
             resp = tf.convert_to_tensor([processed_response])
 
@@ -149,6 +154,20 @@ def chat(build_dir):
                 break
 
         print('bot: ' + ' '.join(response))
+
+
+@cli.command()
+def clean_text():
+    dictionary = Dictionary.load()
+    MAX_LEN = 30
+    preprocessor = TextPreprocessor(dictionary, MAX_LEN)
+
+    while True:
+        context = input('you: ')
+        c = clean(context)
+        print("cleaned: " + str(c))
+        print("tokens: " + str(preprocessor.prepare(clean(context))))
+
 
 cli.add_command(build_command)
 
