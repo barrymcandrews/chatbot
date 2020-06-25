@@ -21,6 +21,7 @@ from chatbot.preprocessor import TextPreprocessor, Token
 from chatbot.dictionary import Dictionary
 from chatbot.util import clean
 from chatbot.sources.imessage import get_imessage_corpus
+from chatbot.sources.manual import get_manual_corpus
 
 @dataclass
 class ChatbotDataset():
@@ -51,8 +52,9 @@ def _pairwise(iterable):
 
 
 def load_dataset() -> ChatbotData:
-    corpus = Corpus(filename=download("movie-corpus"))
-    # corpus = get_imessage_corpus()
+    # corpus = Corpus(filename=download("movie-corpus"))
+    corpus = (get_imessage_corpus()
+        .merge(get_manual_corpus()))
 
     corpus = TextProcessor(clean, 'words').transform(corpus)
 
@@ -63,10 +65,11 @@ def load_dataset() -> ChatbotData:
     else:
         print('Building dictionary.')
         all_words = [word for u in corpus.iter_utterances() for word in u.meta['words']]
+        all_words.extend(["<u" + u.speaker.id + ">" for u in corpus.iter_utterances()])
         dictionary = Dictionary.from_word_list(all_words)
         dictionary.save()
 
-    MAX_LEN = 22
+    MAX_LEN = 30
     preprocessor = TextPreprocessor(dictionary, MAX_LEN)
 
     # Dataset
@@ -82,15 +85,17 @@ def load_dataset() -> ChatbotData:
             all_utterances = [u for u in conversation.iter_utterances()]
 
             for (u1, u2) in _pairwise(all_utterances):
-                if len(u1.meta['words']) < MAX_LEN \
-                    and len(u2.meta['words']) < MAX_LEN \
+                if len(u1.meta['words']) < MAX_LEN - 3 \
+                    and len(u2.meta['words']) < MAX_LEN - 3 \
                     and Token.UNK not in u2.meta['tokens'] \
                     and '*' not in u1.meta['words']:
                     # and u1.meta['is_from_me'] == '0' \
                     # and u2.meta['is_from_me'] == '1':
 
-                    contexts.append(u1.meta['words'])
-                    responses.append(u2.meta['words'])
+                    s1 = "<u" + u1.speaker.id + ">"
+                    s2 = "<u" + u2.speaker.id + ">"
+                    contexts.append([s1] + u1.meta['words'])
+                    responses.append([s2] + u2.meta['words'])
 
 
         for i in range(len(responses)):
