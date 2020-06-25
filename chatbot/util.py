@@ -4,13 +4,13 @@ import re
 def clean(string: str) -> List[str]:
     "converts text into machine-readable tokens"
 
-    string = re.sub(r'<[^>]*>', ' ', string)
+    # string = re.sub(r'<[^>]*>', ' ', string)
     string = re.sub(r'(\.){2,}', ' <elipsis> ', string)
     string = re.sub(r'([0-1]?[0-9]|2[0-3]):[0-5][0-9]', ' <time> ', string)
     string = re.sub(r'(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)', ' <url> ', string)
     string = re.sub(r'(?<=^|(?<=[^a-zA-Z0-9-_\.]))@([A-Za-z]+[A-Za-z0-9-_]+)', ' <handle> ', string)
     string = re.sub(r'(¯\\_\(ツ\)_\/¯)', ' 🤷‍♂️ ', string)
-    string = re.sub(r'(:\/)', ' 😕 ', string)
+    string = re.sub(r'(:[\/\\])', ' 😕 ', string)
     string = re.sub(r'(:\))|(\(:)', ' 😀 ', string)
     string = re.sub(r'(:\()|(\):)', ' 🙁 ', string)
     string = re.sub(r'[*\[\]#@^&$()\":{}`+=~|\|]"', ' ', string)
