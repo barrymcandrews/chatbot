@@ -18,32 +18,33 @@ def build_manual_corpus() -> Corpus:
             for c in cs:
                 conversations.append((c[0],c[1]))
 
-    speakers = {'0': Speaker(id='0'), 'M1': Speaker(id='1')}
+    speakers = {'0': Speaker(id='0'), '_analysis': Speaker(id='_analysis')}
 
 
     utterances = []
     i = 0
-    for prompt, response in conversations:
-        id_1 = "M" + str(i)
-        id_2 = "M" + str(i + 1)
-        utts = [
-            Utterance(
-                id=id_1,
-                text=prompt,
-                speaker=speakers["M1"],
-                root=id_1,
-                reply_to=None
-            ),
-            Utterance(
-                id=id_2,
-                text=response,
-                speaker=speakers["0"],
-                root=id_1,
-                reply_to=id_1,
-            ),
-        ]
-        i = i + 2
-        utterances.extend(utts)
+    for _ in range(10):
+        for prompt, response in conversations:
+            id_1 = "M" + str(i)
+            id_2 = "M" + str(i + 1)
+            utts = [
+                Utterance(
+                    id=id_1,
+                    text=prompt,
+                    speaker=speakers["_analysis"],
+                    root=id_1,
+                    reply_to=None
+                ),
+                Utterance(
+                    id=id_2,
+                    text=response,
+                    speaker=speakers["0"],
+                    root=id_1,
+                    reply_to=id_1,
+                ),
+            ]
+            i = i + 2
+            utterances.extend(utts)
 
     return Corpus(utterances=utterances)
 
